@@ -1,0 +1,50 @@
+[workspace]
+name = "mhm-workshop"
+channels = ["conda-forge"]
+platforms = [
+  "linux-64",
+  "win-64",
+  { name = "mhm-osx-arm64", platform = "osx-arm64", macos = "14.0" },
+  { name = "mhm-osx-64", platform = "osx-64", macos = "14.0" },
+]
+
+[dependencies]
+python = "*"
+qgis = "4.*"
+# Share QGIS's conda-forge Qt stack with ncv; avoid PyPI's bundled Qt libraries.
+pyqt6 = "*"
+numpy = "2.*"
+scipy = "*"
+xarray = "*"
+rioxarray = "*"
+rasterio = "*"
+geopandas = "*"
+pyflwdir = "*"
+numba = "*"
+h5py = "*"
+h5netcdf = "*"
+netcdf4 = "*"
+cartopy = "*"
+dask = "*"
+seaborn = "*"
+pyqtgraph = "*"
+qtpy = ">=2.4.3,<3"
+guidata = ">=3.17.1,<4"
+
+[pypi-dependencies]
+# only what isn't on conda-forge
+mhm = "*"
+mhm_tools = { path = "tools/mhm_tools-0.3.2-py3-none-any.whl" }   # 0.3.2 is not on PyPI yet
+nml-tools = "*"
+ncv = "*"
+
+[activation.env]
+PYTHONNOUSERSITE = "1"   # ignore ~/.local packages
+
+[tasks]
+qgis = "qgis --profiles-path \"$PIXI_PROJECT_ROOT/qgis-profiles\" --profile workshop"   # quoted for paths with spaces
+mhm-test = "python -m mhm \"$PIXI_PROJECT_ROOT/test_domain\""
+
+[target.win-64.tasks]
+# keeps other Python installations on PATH away from QGIS, see tools/start_qgis.py
+qgis = "python -I \"$PIXI_PROJECT_ROOT/tools/start_qgis.py\" --profiles-path \"$PIXI_PROJECT_ROOT/qgis-profiles\" --profile workshop"
