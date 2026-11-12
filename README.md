@@ -71,11 +71,20 @@ must be new, empty or a previous installation, and its path must not contain
 The script
 
 1. installs [pixi](https://pixi.sh) (a package manager) into `~/.pixi` (Windows: `%USERPROFILE%\.pixi`), if it is not installed yet,
-2. installs the workshop environment into `.pixi/` inside the installation folder,
-3. installs the mHM plugin into the workshop QGIS profile there and enables it,
-4. checks that the QGIS executable is available in the environment.
+2. tries to install [Pixi GUI](https://github.com/prefix-dev/pixi-gui) globally through pixi,
+3. installs the workshop environment into `.pixi/` inside the installation folder,
+4. installs the mHM plugin into the workshop QGIS profile there and enables it,
+5. checks that the QGIS executable is available in the environment.
+
+If Pixi GUI cannot be installed, setup warns and continues. This can happen on
+older Linux systems with an incompatible glibc. You can still use all workshop
+tasks from the terminal.
 
 At the end you should see `Setup complete`.
+
+If Pixi GUI was installed successfully, start it with `pixi-gui` or its entry
+in your operating system's application menu. Open the installation folder as
+a workspace to run the `qgis`, `test-mhm` and `view` tasks from the GUI.
 
 Optional: create a launcher so you can start QGIS without a terminal:
 

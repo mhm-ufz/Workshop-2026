@@ -6,6 +6,7 @@
     Installs pixi (if needed) and the workshop environment with QGIS into an
     installation folder, installs the mHM QGIS plugin into the workshop profile
     there and checks that the QGIS executable is available.
+    Also installs Pixi GUI if possible; a failure only produces a warning.
 
     The environment goes to <InstallDir>\.pixi, the QGIS profile with the mHM
     plugin to <InstallDir>\qgis-profiles, and the pixi tool to
@@ -130,6 +131,19 @@ try {
         $env:PATH = "$PixiBinDir;$env:PATH"
     }
     Info "Using $(& pixi --version)"
+
+    # --- optional Pixi GUI (failure must not stop workshop setup) -------------
+    Info 'Installing Pixi GUI ...'
+    try {
+        & pixi global install pixi-gui --channel https://prefix.dev/pixi-gui --channel https://prefix.dev/conda-forge
+        if ($LASTEXITCODE -eq 0) {
+            Info 'Pixi GUI installed. Start it with: pixi-gui'
+        } else {
+            Warn 'Pixi GUI could not be installed. Check the errors above. Continuing with workshop setup; use pixi run qgis to start QGIS.'
+        }
+    } catch {
+        Warn "Pixi GUI could not be installed: $($_.Exception.Message). Continuing with workshop setup; use pixi run qgis to start QGIS."
+    }
 
     # --- 2. environment -------------------------------------------------------
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null

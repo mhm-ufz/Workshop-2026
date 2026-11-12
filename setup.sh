@@ -18,6 +18,7 @@
 # DIR/qgis-profiles, and the pixi tool to ~/.pixi. Start QGIS later with:
 #   cd DIR && pixi run qgis
 # The system Python and any system QGIS are not touched.
+# Pixi GUI is also installed if possible; a failure only produces a warning.
 # Works with the bash 3.2 that ships with macOS.
 
 set -euo pipefail
@@ -117,6 +118,15 @@ if ! command -v pixi >/dev/null 2>&1; then
   fi
 fi
 info "Using $(pixi --version)"
+
+# --- optional Pixi GUI (failure must not stop workshop setup) ------------------
+info "Installing Pixi GUI ..."
+if pixi global install pixi-gui \
+    --channel https://prefix.dev/pixi-gui --channel https://prefix.dev/conda-forge; then
+  info "Pixi GUI installed. Start it with: pixi-gui"
+else
+  warn "Pixi GUI could not be installed. Check the errors above (older Linux systems may have an incompatible glibc). Continuing with workshop setup; use pixi run qgis to start QGIS."
+fi
 
 # --- 2. environment -----------------------------------------------------------
 mkdir -p "$INSTALL_DIR"
