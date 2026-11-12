@@ -145,8 +145,6 @@ mhm-workshop/
 `qgis-profiles/` and `.pixi/` are created in the installation folder. With a
 separate installation folder, it also gets copies of `pixi.toml`, `pixi.lock`,
 `tools/` and `test_domain/`, and `project-init/` stays in the workshop folder.
-An existing `test_domain/` is kept when setup is repeated, preserving local
-namelist changes and simulation outputs.
 
 Each model run writes its output to `runs/<run name>/output/` in the project
 folder `project-init/mhm-qgis/Test-v5/`.
@@ -224,15 +222,15 @@ If you used the launcher, also delete
 
 ## Data sources and licences
 
-| Dataset                              | Source          | Licence          |
-|--------------------------------------|-----------------|------------------|
-| <!-- e.g. DEM -->                    | <!-- source --> | <!-- licence --> |
-| <!-- e.g. meteorological forcing --> |                 |                  |
-| <!-- e.g. soil / geology -->         |                 |                  |
-| <!-- e.g. discharge gauges -->       |                 |                  |
+The bundled Mosel test domain comes from the [mHM repository](https://git.ufz.de/mhm/mhm).
+Its upstream example-data notice limits use to **non-commercial research and
+non-commercial education** and requires consideration of the original data
+providers' licences for use and redistribution.
 
-The data is provided for the exercises in this workshop only. Please check the
-original licences before using it for other purposes.
+[test_domain/NOTICE.md](test_domain/NOTICE.md) preserves that notice, its provider
+acknowledgments and the upstream revision used to verify the bundled files.
+It includes references for E-OBS, the Harmonized World Soil Database, SRTM and
+the European Soil Database. The original providers' terms also apply.
 
 ---
 

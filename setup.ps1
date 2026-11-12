@@ -22,7 +22,7 @@
     Folder to install into (default: current directory, "."). Its path must not contain "Nextcloud",
     and it must be new, empty or a previous installation. It may be this
     folder. Otherwise pixi.toml, the lock file, tools\ and test_domain\ are
-    copied there. An existing test_domain\ is kept, and this folder is left unchanged.
+    copied there and this folder is left unchanged.
 
 .PARAMETER Launcher
     Additionally create a launcher: an entry "QGIS mHM Workshop" in the
@@ -136,14 +136,12 @@ try {
     if ($InstallDir -ne $ProjectDir) {
         Info "Copying the environment files to $InstallDir ..."
         Copy-Item -LiteralPath pixi.toml -Destination $InstallDir -Force
-        if (Test-Path -LiteralPath tools) {
-            New-Item -ItemType Directory -Force -Path (Join-Path $InstallDir 'tools') | Out-Null
-            Get-ChildItem -LiteralPath tools -Force | Copy-Item -Destination (Join-Path $InstallDir 'tools') -Recurse -Force
-        }
-        # Keep local namelist changes and simulation outputs when setup is repeated.
-        if ((Test-Path -LiteralPath test_domain -PathType Container) -and
-            -not (Test-Path -LiteralPath (Join-Path $InstallDir 'test_domain'))) {
-            Copy-Item -LiteralPath test_domain -Destination $InstallDir -Recurse
+        foreach ($Folder in @('tools', 'test_domain')) {
+            if (Test-Path -LiteralPath $Folder -PathType Container) {
+                $Destination = Join-Path $InstallDir $Folder
+                New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+                Get-ChildItem -LiteralPath $Folder -Force | Copy-Item -Destination $Destination -Recurse -Force
+            }
         }
     }
     $LockSource = Join-Path $ProjectDir $LockFile

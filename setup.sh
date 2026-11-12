@@ -8,8 +8,8 @@
 #                      Its path must not contain
 #                      "Nextcloud", and it must be new, empty or a previous install.
 #                      It may be this folder. Otherwise pixi.toml, the lock file,
-#                      tools/ and test_domain/ are copied there. An existing
-#                      test_domain/ is kept, and this folder is left unchanged.
+#                      tools/ and test_domain/ are copied there and this folder
+#                      is left unchanged.
 #   --launcher         additionally create a launcher
 #                      (Linux: app menu entry, macOS: app in ~/Applications)
 #   --start            start QGIS after setup
@@ -126,14 +126,12 @@ not_in_nextcloud "$INSTALL_REAL"     # also when reached through a symbolic link
 if [ "$INSTALL_REAL" != "$(pwd -P)" ]; then
   info "Copying the environment files to $INSTALL_DIR ..."
   cp pixi.toml "$INSTALL_DIR/"
-  if [ -d tools ]; then
-    mkdir -p "$INSTALL_DIR/tools"
-    cp -R tools/. "$INSTALL_DIR/tools/"
-  fi
-  # Keep local namelist changes and simulation outputs when setup is repeated.
-  if [ -d test_domain ] && [ ! -e "$INSTALL_DIR/test_domain" ]; then
-    cp -R test_domain "$INSTALL_DIR/"
-  fi
+  for folder in tools test_domain; do
+    if [ -d "$folder" ]; then
+      mkdir -p "$INSTALL_DIR/$folder"
+      cp -R "$folder/." "$INSTALL_DIR/$folder/"
+    fi
+  done
 fi
 LOCK_SOURCE="$PROJECT_DIR/$LOCK_FILE"
 PLUGIN_ZIP="$INSTALL_DIR/tools/mhm_qgis.zip"
