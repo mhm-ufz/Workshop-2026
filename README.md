@@ -109,15 +109,22 @@ already enabled. Under *Help → About* you can check that QGIS runs from the
 
 ### Inspect NetCDF files with ncv
 
-In the installation folder, run `pixi run ncv` or
-`pixi run ncv path/to/file.nc`. QGIS 4 and ncv share the conda-forge PyQt6
+In the installation folder, run `pixi run view` to open the test domain's
+mRM output (`test_domain/output_b1/mRM_Fluxes_States.nc`) after running
+`pixi run test-mhm`. To open another file, run `pixi run view path/to/file.nc`
+(quote paths containing spaces). The task calls `python -m ncv` with that file.
+
+Run `pixi run ncv` to open the viewer without a file.
+QGIS 4 and ncv share the conda-forge PyQt6
 installation. PyQt6 and netCDF4 are explicit conda dependencies so these
 binary libraries are managed together with QGIS.
 
 ### Test mHM
 
-In the installation folder, run `pixi run mhm-test` to simulate the bundled
+In the installation folder, run `pixi run test-mhm` to simulate the bundled
 test domain. Simulation outputs are written to `test_domain/output_b1/`.
+To run a different domain, use `pixi run test-mhm path/to/domain`
+(quote paths containing spaces). The task passes this directory to `python -m mhm`.
 
 ---
 

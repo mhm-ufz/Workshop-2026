@@ -43,7 +43,14 @@ PYTHONNOUSERSITE = "1"   # ignore ~/.local packages
 
 [tasks]
 qgis = "qgis --profiles-path \"$PIXI_PROJECT_ROOT/qgis-profiles\" --profile workshop"   # quoted for paths with spaces
-mhm-test = "python -m mhm \"$PIXI_PROJECT_ROOT/test_domain\""
+
+[tasks.test-mhm]
+cmd = 'python -m mhm "{{ cwd }}"'
+args = [{ arg = "cwd", default = "test_domain" }]
+
+[tasks.view]
+cmd = 'python -m ncv "{{ file }}"'
+args = [{ arg = "file", default = "test_domain/output_b1/mRM_Fluxes_States.nc" }]
 
 [target.win-64.tasks]
 # keeps other Python installations on PATH away from QGIS, see tools/start_qgis.py
