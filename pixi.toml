@@ -9,7 +9,8 @@ platforms = [
 ]
 
 [dependencies]
-python = "*"
+# Stay on Python 3.13 for wheel compatibility (e.g. crick).
+python = "3.13.*"
 qgis = "4.*"
 # Share QGIS's conda-forge Qt stack with ncv; avoid PyPI's bundled Qt libraries.
 pyqt6 = "*"
@@ -21,6 +22,7 @@ rasterio = "*"
 geopandas = "*"
 pyflwdir = "*"
 numba = "*"
+crick = "*"
 h5py = "*"
 h5netcdf = "*"
 netcdf4 = "*"
