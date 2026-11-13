@@ -86,12 +86,17 @@ def check_installation():
         else:
             print("QGIS did not reach its Python startup hook", flush=True)
         if report.is_file():
-            print(report.read_text(), flush=True)
+            result = json.loads(report.read_text())
+            if result.get("ok"):
+                print(f"QGIS in-app checks passed, but shutdown failed at phase: {result.get('phase')}", flush=True)
+            print(result, flush=True)
         raise
     result = json.loads(report.read_text())
     if not result["ok"]:
         raise RuntimeError(result["error"])
-    print(f"QGIS, mHM plugin, GDAL and ncv imports passed: {result}", flush=True)
+    if result.get("phase") != "quit_signal_received":
+        raise RuntimeError(f"QGIS exited before completing the smoke check: {result}")
+    print(f"QGIS, mHM plugin, GDAL, ncv imports and shutdown passed: {result}", flush=True)
 
 
 def prepare_update():
