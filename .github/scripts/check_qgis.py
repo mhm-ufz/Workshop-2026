@@ -6,13 +6,13 @@ import os
 from pathlib import Path
 import traceback
 
-from qgis import utils
-from qgis.core import Qgis, QgsApplication, QgsRasterLayer
-from qgis.PyQt.QtCore import QT_VERSION_STR, QTimer
-
-
 result = {"ok": False}
 try:
+    print("QGIS --code check reached", flush=True)
+    from qgis import utils
+    from qgis.core import Qgis, QgsApplication, QgsRasterLayer
+    from qgis.PyQt.QtCore import QT_VERSION_STR, QTimer
+
     if not QT_VERSION_STR.startswith("6."):
         raise RuntimeError(f"Expected Qt 6, got {QT_VERSION_STR}")
     if "mhm_qgis" not in utils.active_plugins:
@@ -34,7 +34,11 @@ try:
     result = {"ok": True, "qgis": Qgis.QGIS_VERSION, "qt": QT_VERSION_STR}
 except Exception:
     result["error"] = traceback.format_exc()
+    print(result["error"], flush=True)
 finally:
     Path(os.environ["WORKSHOP_CI_REPORT"]).write_text(json.dumps(result))
-    # Exit after the Qt event loop starts, including when an assertion failed.
-    QTimer.singleShot(0, functools.partial(QgsApplication.exit, 0 if result["ok"] else 1))
+    if not result["ok"]:
+        # An import failure must fail CI, rather than open QGIS's error dialog.
+        os._exit(1)
+    # Exit after the Qt event loop starts.
+    QTimer.singleShot(0, functools.partial(QgsApplication.exit, 0))

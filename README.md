@@ -298,8 +298,9 @@ start the **Installation** workflow manually from the repository's Actions tab.
 The checks run the setup scripts, simulate the bundled mHM test domain, read
 its NetCDF output, and launch QGIS with the enabled mHM plugin. They also check
 that ncv's GUI code imports alongside QGIS and that updates preserve local
-test-domain files and QGIS settings. Qt runs without an interactive display;
-Pixi GUI installation remains optional, as it is for participants.
+test-domain files and QGIS settings. Linux uses an Xvfb virtual display;
+Windows and macOS use their native Qt backends. Pixi GUI installation remains
+optional, as it is for participants.
 
 ---
 

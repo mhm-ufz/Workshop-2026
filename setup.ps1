@@ -238,7 +238,11 @@ try {
     }
 
     # --- 5. checks ------------------------------------------------------------
-    $QgisBin = & pixi run where.exe qgis | Where-Object { $_ -match '^[A-Za-z]:\\' } | Select-Object -First 1
+    # Let the native command finish before selecting a result. Piping directly
+    # to Select-Object -First can close Pixi's stdout early and leave exit code 1.
+    $QgisPaths = @(& pixi run where.exe qgis)
+    if ($LASTEXITCODE -ne 0) { Fail 'Looking up QGIS in the environment failed.' }
+    $QgisBin = $QgisPaths | Where-Object { $_ -match '^[A-Za-z]:\\' } | Select-Object -First 1
     $EnvDir = (Join-Path $InstallDir '.pixi') + '\'
     if ($QgisBin -and $QgisBin.StartsWith($EnvDir, [StringComparison]::OrdinalIgnoreCase)) {
         Info "QGIS found in environment: $QgisBin"
@@ -278,3 +282,6 @@ try {
 } finally {
     Pop-Location
 }
+
+# A successful setup must not propagate a native command's stale exit code.
+exit 0

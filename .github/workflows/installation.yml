@@ -30,8 +30,7 @@ jobs:
           - name: macOS Intel
             os: macos-15-intel
     env:
-      # Exercise Qt without an interactive display on the CI runners.
-      QT_QPA_PLATFORM: offscreen
+      # Use the native Qt backend; Linux gets a virtual X11 display below.
       QT_OPENGL: software
       NCV_OPENGL: "0"
 
@@ -43,6 +42,12 @@ jobs:
       - name: Choose installation directory
         shell: bash
         run: printf 'WORKSHOP_DIR=%s/mhm-workshop\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
+      - name: Install virtual display (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb xauth
 
       # Let the workshop scripts bootstrap Pixi, as they do for participants.
       - name: Install (Linux and macOS)
@@ -63,7 +68,11 @@ jobs:
       - name: Check installation and prepare local changes
         shell: bash
         working-directory: ${{ env.WORKSHOP_DIR }}
-        run: pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --prepare-update
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            exec xvfb-run -a pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --prepare-update
+          fi
+          pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --prepare-update
 
       - name: Update (Linux and macOS)
         if: runner.os != 'Windows'
@@ -80,4 +89,8 @@ jobs:
       - name: Check updated installation and preserved files
         shell: bash
         working-directory: ${{ env.WORKSHOP_DIR }}
-        run: pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --after-update
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            exec xvfb-run -a pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --after-update
+          fi
+          pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --after-update

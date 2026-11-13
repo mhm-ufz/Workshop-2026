@@ -62,13 +62,30 @@ def check_installation():
     # The in-app script reports success only after checking the enabled plugin.
     report = Path(".ci-qgis-result.json").resolve()
     report.unlink(missing_ok=True)
+    diagnostic = Path(".ci-qgis-python.log").resolve()
+    diagnostic.unlink(missing_ok=True)
     script = Path(__file__).with_name("check_qgis.py").resolve()
-    subprocess.run(
-        ["pixi", "run", "qgis", "--nologo", "--code", str(script)],
-        env={**os.environ, "WORKSHOP_CI_REPORT": str(report)},
-        check=True,
-        timeout=180,
-    )
+    startup = script.with_name("qgis_startup.py")
+    try:
+        subprocess.run(
+            ["pixi", "run", "qgis", "--nologo", "--code", str(script)],
+            env={
+                **os.environ,
+                "PYQGIS_STARTUP": str(startup),
+                "WORKSHOP_CI_REPORT": str(report),
+                "WORKSHOP_CI_DIAGNOSTIC": str(diagnostic),
+            },
+            check=True,
+            timeout=180,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        if diagnostic.is_file():
+            print(diagnostic.read_text(errors="replace"), flush=True)
+        else:
+            print("QGIS did not reach its Python startup hook", flush=True)
+        if report.is_file():
+            print(report.read_text(), flush=True)
+        raise
     result = json.loads(report.read_text())
     if not result["ok"]:
         raise RuntimeError(result["error"])
