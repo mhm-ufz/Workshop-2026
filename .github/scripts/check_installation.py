@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 from PyQt6.QtCore import QSettings
 import xarray as xr
@@ -13,7 +14,7 @@ import xarray as xr
 
 PROFILE = Path("qgis-profiles/profiles/workshop")
 PLUGIN = PROFILE / "python/plugins/mhm_qgis"
-INI = PROFILE / "QGIS/QGIS4.ini"
+INI = PROFILE / ("qgis.org" if sys.platform == "darwin" else "QGIS") / "QGIS4.ini"
 OUTPUT = Path("test_domain/output_b1/mRM_Fluxes_States.nc")
 STATE = Path(".ci-update-state.json")
 OBSOLETE = PLUGIN / "obsolete-ci-file.txt"
@@ -74,6 +75,7 @@ def check_installation():
                 "PYQGIS_STARTUP": str(startup),
                 "WORKSHOP_CI_REPORT": str(report),
                 "WORKSHOP_CI_DIAGNOSTIC": str(diagnostic),
+                "WORKSHOP_CI_SETTINGS": str(INI.resolve()),
             },
             check=True,
             timeout=180,

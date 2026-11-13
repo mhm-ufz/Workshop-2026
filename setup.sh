@@ -196,7 +196,12 @@ if [ -f "$PLUGIN_ZIP" ]; then
     || fail "Plugin not found after unpacking $PLUGIN_ZIP"
 
   # enable the plugin in the workshop profile
-  INI="$PROFILE_DIR/QGIS/QGIS4.ini"
+  # QSettings uses the organization domain on macOS, and its name elsewhere.
+  if [ "$OS" = Darwin ]; then
+    INI="$PROFILE_DIR/qgis.org/QGIS4.ini"
+  else
+    INI="$PROFILE_DIR/QGIS/QGIS4.ini"
+  fi
   mkdir -p "$(dirname "$INI")"
   touch "$INI"
   if grep -q '^mhm_qgis=' "$INI"; then

@@ -191,11 +191,20 @@ try {
     } else {
         Warn "$LockFile not found, resolving the newest versions"
     }
-    if ((Test-Path -LiteralPath $LockSource) -and -not $Update) {
-        & pixi install --locked     # exactly the supplied versions
-    } else {
-        # Update mode allows a stale lock file to be refreshed for the new manifest.
-        & pixi install
+    # Downloads (including the Conda/PyPI mapping service) can fail temporarily.
+    # Retry installation, keeping the same manifest and lock-file rules.
+    for ($Attempt = 1; $Attempt -le 3; $Attempt++) {
+        if ((Test-Path -LiteralPath $LockSource) -and -not $Update) {
+            & pixi install --locked     # exactly the supplied versions
+        } else {
+            # Update mode allows a stale lock file to be refreshed for the new manifest.
+            & pixi install
+        }
+        if ($LASTEXITCODE -eq 0) { break }
+        if ($Attempt -lt 3) {
+            Warn "Environment installation failed (attempt $Attempt of 3). Retrying in 10 seconds ..."
+            Start-Sleep -Seconds 10
+        }
     }
     if ($LASTEXITCODE -ne 0) { Fail 'Installing the environment failed. Please send the output above to the workshop team.' }
 
