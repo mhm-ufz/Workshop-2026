@@ -1,0 +1,83 @@
+name: Installation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            os: ubuntu-22.04
+          - name: Windows x86_64
+            os: windows-2025
+          - name: macOS Apple Silicon
+            os: macos-15
+          - name: macOS Intel
+            os: macos-15-intel
+    env:
+      # Exercise Qt without an interactive display on the CI runners.
+      QT_QPA_PLATFORM: offscreen
+      QT_OPENGL: software
+      NCV_OPENGL: "0"
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Choose installation directory
+        shell: bash
+        run: printf 'WORKSHOP_DIR=%s/mhm-workshop\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
+      # Let the workshop scripts bootstrap Pixi, as they do for participants.
+      - name: Install (Linux and macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          bash setup.sh --install-dir "$WORKSHOP_DIR"
+          printf '%s\n' "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+
+      - name: Install (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          & .\setup.ps1 -InstallDir $env:WORKSHOP_DIR
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "$env:USERPROFILE\.pixi\bin" >> $env:GITHUB_PATH
+
+      - name: Check installation and prepare local changes
+        shell: bash
+        working-directory: ${{ env.WORKSHOP_DIR }}
+        run: pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --prepare-update
+
+      - name: Update (Linux and macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash setup.sh --update --install-dir "$WORKSHOP_DIR"
+
+      - name: Update (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          & .\setup.ps1 -Update -InstallDir $env:WORKSHOP_DIR
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check updated installation and preserved files
+        shell: bash
+        working-directory: ${{ env.WORKSHOP_DIR }}
+        run: pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --after-update
