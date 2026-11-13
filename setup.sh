@@ -2,7 +2,7 @@
 # Setup script for the mHM QGIS workshop environment (Ubuntu/Linux and macOS).
 #
 # Usage:
-#   bash setup.sh [--install-dir DIR] [--launcher] [--start]
+#   bash setup.sh [--install-dir DIR] [--update] [--launcher] [--start]
 #
 #   --install-dir DIR  folder to install into (default: current directory, ".").
 #                      Its path must not contain
@@ -10,6 +10,8 @@
 #                      It may be this folder. Otherwise pixi.toml, the lock file,
 #                      tools/ and test_domain/ are copied there and this folder
 #                      is left unchanged.
+#   --update           refresh an existing installation from this checkout;
+#                      keep its test_domain/ and QGIS profile settings
 #   --launcher         additionally create a launcher
 #                      (Linux: app menu entry, macOS: app in ~/Applications)
 #   --start            start QGIS after setup
@@ -28,6 +30,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # so the setup copies this file there. Change it to switch to another one.
 LOCK_FILE="pixi.lock"
 INSTALL_DIR="."
+UPDATE=false
 CREATE_LAUNCHER=false
 START=false
 
@@ -43,6 +46,7 @@ while [ $# -gt 0 ]; do
       esac
       INSTALL_DIR="$2"; shift ;;
     --install-dir=*)      INSTALL_DIR="${1#*=}" ;;
+    --update)             UPDATE=true ;;
     --launcher|--desktop) CREATE_LAUNCHER=true ;;
     --start)              START=true ;;
     -h|--help)            sed -n '2,/^$/p' "$0"; exit 0 ;;
@@ -70,6 +74,9 @@ not_in_nextcloud() {
 }
 not_in_nextcloud "$INSTALL_DIR"
 [ ! -e "$INSTALL_DIR" ] || [ -d "$INSTALL_DIR" ] || fail "$INSTALL_DIR is a file, not a folder"
+if $UPDATE && ! grep -qs '^name = "mhm-workshop"' "$INSTALL_DIR/pixi.toml"; then
+  fail "No workshop installation found in $INSTALL_DIR. Run setup without --update first, or choose the existing installation with --install-dir."
+fi
 # never write into a folder with other content, unless it is a previous installation
 if [ -d "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR")" ] \
    && ! grep -qs '^name = "mhm-workshop"' "$INSTALL_DIR/pixi.toml"; then
@@ -137,6 +144,9 @@ if [ "$INSTALL_REAL" != "$(pwd -P)" ]; then
   info "Copying the environment files to $INSTALL_DIR ..."
   cp pixi.toml "$INSTALL_DIR/"
   for folder in tools test_domain; do
+    if $UPDATE && [ "$folder" = test_domain ] && [ -d "$INSTALL_DIR/test_domain" ]; then
+      continue
+    fi
     if [ -d "$folder" ]; then
       mkdir -p "$INSTALL_DIR/$folder"
       cp -R "$folder/." "$INSTALL_DIR/$folder/"
@@ -148,15 +158,23 @@ PLUGIN_ZIP="$INSTALL_DIR/tools/mhm_qgis.zip"
 # From here on, everything happens in the installation folder
 cd "$INSTALL_DIR"
 
-info "Installing the workshop environment into $INSTALL_DIR/.pixi (this can take a few minutes) ..."
+if $UPDATE; then
+  info "Updating the workshop environment in $INSTALL_DIR/.pixi ..."
+else
+  info "Installing the workshop environment into $INSTALL_DIR/.pixi (this can take a few minutes) ..."
+fi
 if [ -f "$LOCK_SOURCE" ]; then
   info "Using the package versions from $LOCK_FILE"
   [ "$LOCK_SOURCE" -ef pixi.lock ] || cp "$LOCK_SOURCE" pixi.lock
-  # --locked: exactly the tested versions
+else
+  warn "$LOCK_FILE not found, resolving the newest versions"
+fi
+
+if [ -f "$LOCK_SOURCE" ] && ! $UPDATE; then
+  # Fresh installs use the supplied versions; updates may refresh a stale lock.
   pixi install --locked \
     || fail "Installing the environment failed. Please send the output above to the workshop team."
 else
-  warn "$LOCK_FILE not found, resolving the newest versions"
   pixi install \
     || fail "Installing the environment failed. Please send the output above to the workshop team."
 fi
@@ -239,7 +257,11 @@ EOF
   fi
 fi
 
-info "Setup complete. Start QGIS with:  cd \"$INSTALL_DIR\" && pixi run qgis"
+if $UPDATE; then
+  info "Update complete. Start QGIS with:  cd \"$INSTALL_DIR\" && pixi run qgis"
+else
+  info "Setup complete. Start QGIS with:  cd \"$INSTALL_DIR\" && pixi run qgis"
+fi
 
 if $START; then
   exec pixi run qgis

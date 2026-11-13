@@ -1,13 +1,14 @@
 # mHM QGIS Workshop
 
-This folder contains everything you need for the workshop:
+This repository sets up the software for the workshop:
 
 - a self-contained software environment with QGIS, mHM and all Python packages,
 - the mHM QGIS plugin, set up in a separate QGIS profile,
-- the input data and a prepared mHM QGIS project for the exercises.
+- a small test domain for a first mHM run and viewing its output.
 
-Everything is installed **inside this folder**. Your system Python and any QGIS
-you already have installed are not changed.
+The workshop exercise data and projects will be distributed separately.
+The environment and QGIS profile are installed **inside the installation folder**.
+Your system Python and any QGIS you already have installed are not changed.
 
 > **Please complete the installation before the workshop** and let us know if
 > anything goes wrong. Installation downloads several GB and can take a while
@@ -82,10 +83,6 @@ tasks from the terminal.
 
 At the end you should see `Setup complete`.
 
-If Pixi GUI was installed successfully, start it with `pixi-gui` or its entry
-in your operating system's application menu. Open the installation folder as
-a workspace to run the `qgis`, `test-mhm` and `view` tasks from the GUI.
-
 Optional: create a launcher so you can start QGIS without a terminal:
 
 ```
@@ -99,7 +96,22 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 -Launcher
 - **macOS:** an app *QGIS mHM Workshop* appears in `~/Applications`.
 - **Windows:** an entry *QGIS mHM Workshop* appears in the Start menu. Next to QGIS it opens a minimised console window; leave it open, it closes together with QGIS.
 
-### 3. Start QGIS
+### 3. Open Pixi GUI
+
+Start [Pixi GUI](https://github.com/prefix-dev/pixi-gui) from your operating
+system's application menu or run `pixi-gui` in a terminal. Open the
+**installation folder** as a workspace. Its tasks are:
+
+| Task | Purpose |
+|------|---------|
+| `qgis` | Open QGIS with the workshop profile and mHM plugin. |
+| `test-mhm` | Run the bundled test domain, or pass another domain directory. |
+| `view` | Open the test domain's mRM output in ncv, or pass another NetCDF file. |
+
+Run `test-mhm` before `view` to generate the default output file.
+If Pixi GUI is unavailable, use the terminal commands below.
+
+### 4. Start QGIS from the terminal
 
 In the installation folder, run:
 
@@ -112,9 +124,9 @@ or use the launcher. QGIS opens with the workshop profile and the mHM plugin
 already enabled. Under *Help → About* you can check that QGIS runs from the
 `.pixi/` folder in the installation folder.
 
-> **Important:** always start QGIS this way. If you open QGIS from your normal
-> application menu, you get your system QGIS, which does not have the plugin
-> and its dependencies.
+> **Important:** use the workspace's `qgis` task in Pixi GUI, `pixi run qgis`,
+> or the *QGIS mHM Workshop* launcher. A separate system QGIS installation
+> does not use the workshop profile and environment.
 
 ### Inspect NetCDF files with ncv
 
@@ -134,6 +146,52 @@ In the installation folder, run `pixi run test-mhm` to simulate the bundled
 test domain. Simulation outputs are written to `test_domain/output_b1/`.
 To run a different domain, use `pixi run test-mhm path/to/domain`
 (quote paths containing spaces). The task passes this directory to `python -m mhm`.
+The bundled test domain's usage terms and attribution are in
+[test_domain/NOTICE.md](test_domain/NOTICE.md).
+
+---
+
+## Updating an installation
+
+Close QGIS and any running workshop tasks. Get the updated repository first:
+for a Git clone, run `git pull --ff-only` in the repository folder; otherwise
+download and extract the new archive.
+
+From the updated repository folder, run the setup script in update mode:
+
+**Ubuntu and macOS:**
+
+```bash
+bash setup.sh --update
+```
+
+**Windows:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup.ps1 -Update
+```
+
+These commands use the current directory as the installation folder. If you
+installed elsewhere, or extracted the updated archive into a new folder,
+point the updated script at the existing installation:
+
+```bash
+bash setup.sh --update --install-dir ~/mhm-workshop-env
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup.ps1 -Update -InstallDir C:\mhm-workshop-env
+```
+
+Update mode refreshes the environment files, synchronizes installed packages
+with the current manifest and refreshes the lock file if needed. It reinstalls
+the bundled mHM plugin while keeping the QGIS profile settings and existing
+`test_domain/` files, including local namelist changes and simulation outputs.
+Workshop exercise data and projects distributed separately are left in place.
+Pixi GUI installation is retried; a failure still only produces a warning.
+
+When you see `Update complete`, reopen the workspace in Pixi GUI or run
+`pixi run qgis` in the installation folder.
 
 ---
 
@@ -150,20 +208,15 @@ mhm-workshop/
 │   ├── mhm_qgis.zip   the mHM QGIS plugin, installed by the setup script
 │   ├── mhm_tools-0.3.2-py3-none-any.whl  mhm-tools (not yet on PyPI)
 │   └── start_qgis.py  QGIS start helper for Windows
-├── test_domain/       input data and namelists for the mHM test run
-├── project-init/      the prepared mHM QGIS project for the exercises
-│   ├── input-data/    mHM input data
-│   └── mhm-qgis/      the project (Test-v5)
+├── test_domain/       bundled domain for a first test run, including NOTICE.md
 ├── qgis-profiles/     QGIS profile with the mHM plugin (created by the setup script)
 └── .pixi/             the installed environment (created by the setup script)
 ```
 
 `qgis-profiles/` and `.pixi/` are created in the installation folder. With a
 separate installation folder, it also gets copies of `pixi.toml`, `pixi.lock`,
-`tools/` and `test_domain/`, and `project-init/` stays in the workshop folder.
-
-Each model run writes its output to `runs/<run name>/output/` in the project
-folder `project-init/mhm-qgis/Test-v5/`.
+`tools/` and `test_domain/`. Update mode keeps an existing `test_domain/`.
+The test run writes its results to `test_domain/output_b1/`.
 
 ---
 
@@ -236,17 +289,17 @@ If you used the launcher, also delete
 
 ---
 
-## Data sources and licences
+## Installation checks
 
-The bundled Mosel test domain comes from the [mHM repository](https://git.ufz.de/mhm/mhm).
-Its upstream example-data notice limits use to **non-commercial research and
-non-commercial education** and requires consideration of the original data
-providers' licences for use and redistribution.
+GitHub Actions checks fresh installations and updates on Linux, Windows, and
+macOS (Apple Silicon and Intel) for pushes and pull requests. You can also
+start the **Installation** workflow manually from the repository's Actions tab.
 
-[test_domain/NOTICE.md](test_domain/NOTICE.md) preserves that notice, its provider
-acknowledgments and the upstream revision used to verify the bundled files.
-It includes references for E-OBS, the Harmonized World Soil Database, SRTM and
-the European Soil Database. The original providers' terms also apply.
+The checks run the setup scripts, simulate the bundled mHM test domain, read
+its NetCDF output, and launch QGIS with the enabled mHM plugin. They also check
+that ncv's GUI code imports alongside QGIS and that updates preserve local
+test-domain files and QGIS settings. Qt runs without an interactive display;
+Pixi GUI installation remains optional, as it is for participants.
 
 ---
 

@@ -29,6 +29,10 @@
     Additionally create a launcher: an entry "QGIS mHM Workshop" in the
     Start menu. -Desktop does the same.
 
+.PARAMETER Update
+    Refresh an existing installation from this checkout, keeping its
+    test_domain\ and QGIS profile settings. Update the checkout first.
+
 .PARAMETER Start
     Start QGIS after setup.
 
@@ -40,10 +44,14 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File setup.ps1 -InstallDir C:\mhm-workshop -Launcher -Start
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File setup.ps1 -Update
 #>
 [CmdletBinding(PositionalBinding = $false)]
 param(
     [string]$InstallDir = '.',
+    [switch]$Update,
     [Alias('Desktop')]
     [switch]$Launcher,
     [switch]$Start,
@@ -76,6 +84,7 @@ if ($InstallDir -match 'nextcloud') {
     Fail "The installation folder must not be inside Nextcloud (got: $InstallDir). Choose a local folder, e.g. C:\mhm-workshop"
 }
 if (Test-Path -LiteralPath $InstallDir -PathType Leaf) { Fail "$InstallDir is a file, not a folder" }
+$Previous = $false
 if (Test-Path -LiteralPath $InstallDir) {
     # never write into a folder with other content, unless it is a previous installation
     $Manifest = Join-Path $InstallDir 'pixi.toml'
@@ -84,6 +93,9 @@ if (Test-Path -LiteralPath $InstallDir) {
     if (-not $Previous -and @(Get-ChildItem -LiteralPath $InstallDir -Force).Count -gt 0) {
         Fail "$InstallDir is not empty and holds no previous workshop installation. Choose a new or empty folder."
     }
+}
+if ($Update -and -not $Previous) {
+    Fail "No workshop installation found in $InstallDir. Run setup without -Update first, or choose the existing installation with -InstallDir."
 }
 
 # Work in this folder, and return to the caller's folder when done
@@ -151,6 +163,10 @@ try {
         Info "Copying the environment files to $InstallDir ..."
         Copy-Item -LiteralPath pixi.toml -Destination $InstallDir -Force
         foreach ($Folder in @('tools', 'test_domain')) {
+            if ($Update -and $Folder -eq 'test_domain' -and
+                (Test-Path -LiteralPath (Join-Path $InstallDir 'test_domain') -PathType Container)) {
+                continue
+            }
             if (Test-Path -LiteralPath $Folder -PathType Container) {
                 $Destination = Join-Path $InstallDir $Folder
                 New-Item -ItemType Directory -Force -Path $Destination | Out-Null
@@ -163,14 +179,22 @@ try {
     # From here on, everything happens in the installation folder
     Set-Location -LiteralPath $InstallDir
 
-    Info "Installing the workshop environment into $InstallDir\.pixi (this can take a few minutes) ..."
+    if ($Update) {
+        Info "Updating the workshop environment in $InstallDir\.pixi ..."
+    } else {
+        Info "Installing the workshop environment into $InstallDir\.pixi (this can take a few minutes) ..."
+    }
     if (Test-Path -LiteralPath $LockSource) {
         Info "Using the package versions from $LockFile"
         $LockTarget = Join-Path $InstallDir 'pixi.lock'
         if ($LockSource -ne $LockTarget) { Copy-Item -LiteralPath $LockSource -Destination $LockTarget -Force }
-        & pixi install --locked     # exactly the tested versions
     } else {
         Warn "$LockFile not found, resolving the newest versions"
+    }
+    if ((Test-Path -LiteralPath $LockSource) -and -not $Update) {
+        & pixi install --locked     # exactly the supplied versions
+    } else {
+        # Update mode allows a stale lock file to be refreshed for the new manifest.
         & pixi install
     }
     if ($LASTEXITCODE -ne 0) { Fail 'Installing the environment failed. Please send the output above to the workshop team.' }
@@ -240,7 +264,11 @@ try {
         Info "Launcher created: '$AppName' in the Start menu"
     }
 
-    Info "Setup complete. Start QGIS with:  cd `"$InstallDir`"; pixi run qgis"
+    if ($Update) {
+        Info "Update complete. Start QGIS with:  cd `"$InstallDir`"; pixi run qgis"
+    } else {
+        Info "Setup complete. Start QGIS with:  cd `"$InstallDir`"; pixi run qgis"
+    }
     if ($PixiInstalled) { Warn "pixi was just installed. Open a new terminal window before running 'pixi' yourself." }
 
     if ($Start) {
