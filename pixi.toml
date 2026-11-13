@@ -54,6 +54,12 @@ args = [{ arg = "cwd", default = "test_domain" }]
 cmd = 'python -m ncv "{{ file }}"'
 args = [{ arg = "file", default = "test_domain/output_b1/mRM_Fluxes_States.nc" }]
 
+[target.win-64.dependencies]
+# QGIS build _1 imports Protobuf symbols using Abseil's lts_20260526 ABI.
+# Protobuf build _4 uses lts_20260817 despite the unchanged version number.
+qgis = { version = "==4.2.3", build = "py313h07e87ee_1" }
+libprotobuf = { version = "==7.35.1", build = "h1a71995_3" }
+
 [target.win-64.tasks]
 # keeps other Python installations on PATH away from QGIS, see tools/start_qgis.py
 qgis = "python -I \"$PIXI_PROJECT_ROOT/tools/start_qgis.py\" --profiles-path \"$PIXI_PROJECT_ROOT/qgis-profiles\" --profile workshop"
