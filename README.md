@@ -56,7 +56,7 @@ You can also type `pixi-gui` in a new PowerShell or Terminal window.
 In Pixi GUI, open the workshop folder (`C:\mhm-workshop` on Windows or
 `~/mhm-workshop` on Linux/macOS)—the one containing `pixi.toml`.
 
-![Pixi GUI showing the mHM Workshop 2026 workspace and its five tasks](tools/GUI.png)
+![Pixi GUI showing the mHM Workshop 2026 workspace and its tasks](tools/GUI.png)
 
 Click the **play button next to `mhm`** for a first test run. When it finishes,
 run **`view`** to explore the results. The default settings are ready to use.
@@ -70,6 +70,7 @@ You can return to Pixi GUI throughout the workshop to launch the tools.
 | `ncdump` | Print a NetCDF file's header to inspect its variables and dimensions. |
 | `qgis` | Open QGIS with the workshop's mHM plugin enabled. |
 | `shell` | Open a terminal with the workshop tools available. |
+| `update` | Update the workshop software to the latest version (see [Updating](#updating)). |
 | `view` | Open a NetCDF file in the graphical viewer. |
 
 The pencil button lets you change a task's inputs. Run `mhm` first to create
@@ -102,7 +103,21 @@ pixi run qgis
 
 ## Updating
 
-If we ask you to update, close the workshop tools. For a Git clone, run
+If we ask you to update, close QGIS, the viewer and any workshop terminal.
+Then click the **play button next to `update`** in Pixi GUI (or run
+`pixi run update` in the workshop folder). Wait until you see
+**Update complete**. If Pixi GUI does not show the new tasks afterwards,
+close and reopen the workshop folder in Pixi GUI.
+
+The update downloads the latest workshop version and replaces `pixi.toml`,
+`README.md` and the `tools` folder, then updates the software and the mHM
+plugin. Your `test_domain` folder, results and QGIS settings are kept.
+A Git clone is updated with `git pull --ff-only` instead.
+
+### Updating by hand
+
+Use this if your workshop folder has no `update` task yet, or if the `update`
+task fails. Close the workshop tools first. For a Git clone, run
 `git pull --ff-only` in the workshop folder, then rerun the setup command above
 with `--update` (Windows: `-Update`).
 

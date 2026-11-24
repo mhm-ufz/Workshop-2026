@@ -35,6 +35,12 @@ jobs:
       NCV_OPENGL: "0"
 
     steps:
+      # Check out the same LF files as the ZIP that participants download and
+      # the update task installs (Windows runners convert to CRLF by default).
+      - name: Keep LF line endings (Windows)
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -74,17 +80,14 @@ jobs:
           fi
           pixi run python "$GITHUB_WORKSPACE/.github/scripts/check_installation.py" --prepare-update
 
-      - name: Update (Linux and macOS)
-        if: runner.os != 'Windows'
+      # The update task as participants run it: it downloads this commit as a ZIP
+      # and runs its setup script in update mode (PowerShell on Windows).
+      - name: Update with the update task
         shell: bash
-        run: bash setup.sh --update --install-dir "$WORKSHOP_DIR"
-
-      - name: Update (Windows PowerShell)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          & .\setup.ps1 -Update -InstallDir $env:WORKSHOP_DIR
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        working-directory: ${{ env.WORKSHOP_DIR }}
+        env:
+          WORKSHOP_ZIP_URL: https://github.com/${{ github.repository }}/archive/${{ github.sha }}.zip
+        run: pixi run update
 
       - name: Check updated installation and preserved files
         shell: bash

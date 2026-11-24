@@ -145,16 +145,21 @@ try {
     Info "Using $(& pixi --version)"
 
     # --- optional Pixi GUI (failure must not stop workshop setup) -------------
-    Info 'Installing Pixi GUI ...'
-    try {
-        & pixi global install pixi-gui --channel https://prefix.dev/pixi-gui --channel https://prefix.dev/conda-forge
-        if ($LASTEXITCODE -eq 0) {
-            Info 'Pixi GUI installed. Start it with: pixi-gui'
-        } else {
-            Warn 'Pixi GUI could not be installed. Check the errors above. Continuing with workshop setup; use pixi run qgis to start QGIS.'
+    # An update may run from Pixi GUI itself, whose running program cannot be replaced
+    if ($Update -and (Get-Command pixi-gui -ErrorAction SilentlyContinue)) {
+        Info 'Pixi GUI is already installed.'
+    } else {
+        Info 'Installing Pixi GUI ...'
+        try {
+            & pixi global install pixi-gui --channel https://prefix.dev/pixi-gui --channel https://prefix.dev/conda-forge
+            if ($LASTEXITCODE -eq 0) {
+                Info 'Pixi GUI installed. Start it with: pixi-gui'
+            } else {
+                Warn 'Pixi GUI could not be installed. Check the errors above. Continuing with workshop setup; use pixi run qgis to start QGIS.'
+            }
+        } catch {
+            Warn "Pixi GUI could not be installed: $($_.Exception.Message). Continuing with workshop setup; use pixi run qgis to start QGIS."
         }
-    } catch {
-        Warn "Pixi GUI could not be installed: $($_.Exception.Message). Continuing with workshop setup; use pixi run qgis to start QGIS."
     }
 
     # --- 2. environment -------------------------------------------------------
